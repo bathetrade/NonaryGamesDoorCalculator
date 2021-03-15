@@ -9,6 +9,7 @@ namespace NonaryGamesDoorCalculator
         static void Main()
         {
             var people = new[] {
+                //new Person("Zero", 0),
                 new Person("Ace", 1),
                 //new Person("Snake", 2),
                 new Person("Santa", 3),
@@ -21,25 +22,27 @@ namespace NonaryGamesDoorCalculator
             };
 
             var possibilities = new List<Possibility>();
-            var doors = new[] { 3, 7, 8 };
+            var doors = new[] { 1, 2, 6 };
             for (var k = 1; k <= doors.Length; ++k)
             {
                 IterateCombinations(doors, k, (k, doors) =>
                 {
-                    CheckDoorCombinations(people.ToArray(), doors, (possibility) =>
+                    CheckDoorCombinations(people.ToArray(), doors, 3..5, (possibility) =>
                     {
                         possibilities.Add(possibility);
-                    }, door: 0);
+                    });
                 });
             }
 
             foreach (var possibility in possibilities.OrderByDescending(p => p.NumPeople))
             {
-                Console.WriteLine($"Remaining people: {people.Length - possibility.NumPeople}    {possibility}");
+                Console.WriteLine($"Remaining people: {people.Length - possibility.NumPeople}  {possibility}");
+                var remainingPeople = people.Except(possibility.DoorInfos.SelectMany(di => di.People));
+                Console.WriteLine($"\t{string.Join<Person>(", ", remainingPeople)} ({DigitalRoot(remainingPeople)})");
             }
         }
 
-        static void CheckDoorCombinations(Person[] remainingPeople, int[] doors, Action<Possibility> handlePossibility, int door = 0, Stack<DoorInfo> doorInfos = null)
+        static void CheckDoorCombinations(Person[] remainingPeople, int[] doors, Range range, Action<Possibility> handlePossibility, int door = 0, Stack<DoorInfo> doorInfos = null)
         {
             if (door >= doors.Length)
             {
@@ -48,14 +51,14 @@ namespace NonaryGamesDoorCalculator
             }
 
             doorInfos ??= new Stack<DoorInfo>();
-            for (var numPeople = 3; numPeople <= 5 && numPeople <= remainingPeople.Length; ++numPeople)
+            for (var numPeople = range.Start.Value; numPeople <= range.End.Value && numPeople <= remainingPeople.Length; ++numPeople)
             {
                 IterateCombinations(remainingPeople, k: numPeople, (k, people) =>
                 {
                     if (DigitalRoot(people) == doors[door])
                     {
                         doorInfos.Push(new DoorInfo { DigitalRoot = doors[door], People = people.ToArray() });
-                        CheckDoorCombinations(remainingPeople.Except(people).ToArray(), doors, handlePossibility, door + 1, doorInfos);
+                        CheckDoorCombinations(remainingPeople.Except(people).ToArray(), doors, range, handlePossibility, door + 1, doorInfos);
                         doorInfos.Pop();
                     }
                 });
