@@ -42,24 +42,24 @@ namespace NonaryGamesDoorCalculator
             }
         }
 
-        static void CheckDoorCombinations(Person[] remainingPeople, int[] doors, Range numPeopleAllowedPerDoor, Action<Possibility> handlePossibility, int door = 0, Stack<DoorInfo> doorInfos = null)
+        static void CheckDoorCombinations(Person[] remainingPeople, int[] doors, Range numPeopleAllowedPerDoor, Action<Possibility> handlePossibility, int door = 0, Queue<DoorInfo> doorInfos = null)
         {
             if (door >= doors.Length)
             {
-                handlePossibility(new Possibility(doorInfos.Reverse().ToArray()));
+                handlePossibility(new Possibility(doorInfos.ToArray()));
                 return;
             }
 
-            doorInfos ??= new Stack<DoorInfo>();
+            doorInfos ??= new Queue<DoorInfo>();
             for (var numPeople = numPeopleAllowedPerDoor.Start.Value; numPeople <= numPeopleAllowedPerDoor.End.Value && numPeople <= remainingPeople.Length; ++numPeople)
             {
                 IterateCombinations(remainingPeople, k: numPeople, (k, people) =>
                 {
                     if (DigitalRoot(people) == doors[door])
                     {
-                        doorInfos.Push(new DoorInfo { DigitalRoot = doors[door], People = people.ToArray() });
+                        doorInfos.Enqueue(new DoorInfo { DigitalRoot = doors[door], People = people.ToArray() });
                         CheckDoorCombinations(remainingPeople.Except(people).ToArray(), doors, numPeopleAllowedPerDoor, handlePossibility, door + 1, doorInfos);
-                        doorInfos.Pop();
+                        doorInfos.Dequeue();
                     }
                 });
             }
